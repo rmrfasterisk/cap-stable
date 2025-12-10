@@ -1,0 +1,22 @@
+# Explicitly use only Node.js provider (ignore Rust/Cargo.toml)
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ["nodejs_20", "pnpm", "ffmpeg"]
+
+[phases.install]
+cmds = ["pnpm install --frozen-lockfile"]
+
+[phases.build]
+cmds = [
+    "export NEXT_PUBLIC_DOCKER_BUILD=true",
+    "pnpm --filter @cap/database build",
+    "pnpm --filter @cap/env build",
+    "pnpm --filter @cap/utils build",
+    "pnpm --filter @cap/web build",
+    "cp -r apps/web/public apps/web/.next/standalone/apps/web/public",
+    "cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static"
+]
+
+[start]
+cmd = "node apps/web/.next/standalone/apps/web/server.js"
