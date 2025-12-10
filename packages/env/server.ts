@@ -26,7 +26,15 @@ function createServerEnv() {
 					"32 byte hex string for encrypting values like AWS access keys",
 				),
 
-			// Cap uses Resend for email sending, including sending login code emails
+			EMAIL_PROVIDER: z
+				.enum(["ses", "resend"])
+				.optional()
+				.default("ses")
+				.describe("Email provider: 'ses' (default) or 'resend'"),
+			AWS_SES_REGION: z.string().optional(),
+			AWS_SES_ACCESS_KEY_ID: z.string().optional(),
+			AWS_SES_SECRET_ACCESS_KEY: z.string().optional(),
+			AWS_SES_FROM_EMAIL: z.string().optional().describe("From email for SES"),
 			RESEND_API_KEY: z.string().optional(),
 			RESEND_FROM_DOMAIN: z.string().optional(),
 
@@ -82,8 +90,19 @@ function createServerEnv() {
 				.describe("Comma-separated list of permitted signup domains"),
 
 			/// AI providers
-			DEEPGRAM_API_KEY: z.string().optional().describe("Audio transcription"),
-			OPENAI_API_KEY: z.string().optional().describe("AI summaries"),
+			TRANSCRIPTION_PROVIDER: z
+				.enum(["deepgram", "whisper"])
+				.optional()
+				.default("whisper")
+				.describe("Transcription provider: whisper (default) or deepgram"),
+			DEEPGRAM_API_KEY: z
+				.string()
+				.optional()
+				.describe("Audio transcription (Deepgram)"),
+			OPENAI_API_KEY: z
+				.string()
+				.optional()
+				.describe("AI summaries and Whisper transcription"),
 			GROQ_API_KEY: z.string().optional().describe("AI summaries"),
 
 			/// Cap Cloud

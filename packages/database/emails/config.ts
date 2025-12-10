@@ -1,11 +1,12 @@
 import { buildEnv, serverEnv } from "@cap/env";
 import type { JSXElementConstructor, ReactElement } from "react";
 import { Resend } from "resend";
+import { sendEmailViaSes } from "./ses-provider";
 
 export const resend = () =>
 	serverEnv().RESEND_API_KEY ? new Resend(serverEnv().RESEND_API_KEY) : null;
 
-export const sendEmail = async ({
+const sendEmailViaResend = async ({
 	email,
 	subject,
 	react,
@@ -40,4 +41,21 @@ export const sendEmail = async ({
 		react,
 		scheduledAt,
 	}) as any;
+};
+
+export const sendEmail = async (params: {
+	email: string;
+	subject: string;
+	react: ReactElement<any, string | JSXElementConstructor<any>>;
+	marketing?: boolean;
+	test?: boolean;
+	scheduledAt?: string;
+}) => {
+	const provider = serverEnv().EMAIL_PROVIDER || "ses";
+
+	if (provider === "ses") {
+		return sendEmailViaSes(params);
+	}
+
+	return sendEmailViaResend(params);
 };

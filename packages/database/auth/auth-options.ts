@@ -74,7 +74,14 @@ export const authOptions = (): NextAuthOptions => {
 					async sendVerificationRequest({ identifier, token }) {
 						console.log("sendVerificationRequest");
 
-						if (!serverEnv().RESEND_API_KEY) {
+						const env = serverEnv();
+						const emailProvider = env.EMAIL_PROVIDER || "ses";
+						const hasEmailConfig =
+							emailProvider === "ses"
+								? env.AWS_SES_ACCESS_KEY_ID && env.AWS_SES_SECRET_ACCESS_KEY
+								: env.RESEND_API_KEY;
+
+						if (!hasEmailConfig) {
 							console.log("\n");
 							console.log(
 								"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",

@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 import { Option } from "effect";
 import { generateAiMetadata } from "@/actions/videos/generate-ai-metadata";
 import { runPromise } from "./server";
+import { transcribeWithWhisper } from "./whisper-client";
 
 type TranscribeResult = {
 	success: boolean;
@@ -20,10 +21,19 @@ export async function transcribeVideo(
 	aiGenerationEnabled = false,
 	isRetry = false,
 ): Promise<TranscribeResult> {
-	if (!serverEnv().DEEPGRAM_API_KEY) {
+	const provider = serverEnv().TRANSCRIPTION_PROVIDER;
+
+	if (provider === "deepgram" && !serverEnv().DEEPGRAM_API_KEY) {
 		return {
 			success: false,
-			message: "Missing necessary environment variables",
+			message: "Missing DEEPGRAM_API_KEY for Deepgram transcription",
+		};
+	}
+
+	if (provider === "whisper" && !serverEnv().OPENAI_API_KEY) {
+		return {
+			success: false,
+			message: "Missing OPENAI_API_KEY for Whisper transcription",
 		};
 	}
 
@@ -284,13 +294,23 @@ function formatTimestamp(seconds: number): string {
 }
 
 async function transcribeAudio(videoUrl: string): Promise<string> {
-	//if dev - don't transcribe
 	if (serverEnv().NODE_ENV === "development") {
 		console.log("[transcribeAudio] Development mode, skipping transcription");
 		return "";
 	}
 
+	const provider = serverEnv().TRANSCRIPTION_PROVIDER;
+	console.log(`[transcribeAudio] Using provider: ${provider}`);
 	console.log("[transcribeAudio] Starting transcription for URL:", videoUrl);
+
+	if (provider === "whisper") {
+		return await transcribeWithWhisper(videoUrl);
+	}
+
+	return await transcribeWithDeepgram(videoUrl);
+}
+
+async function transcribeWithDeepgram(videoUrl: string): Promise<string> {
 	const deepgram = createClient(serverEnv().DEEPGRAM_API_KEY as string);
 
 	const { result, error } = await deepgram.listen.prerecorded.transcribeUrl(
