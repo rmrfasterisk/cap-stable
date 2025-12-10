@@ -2,29 +2,7 @@
 	"$schema": "https://railway.com/railway.schema.json",
 	"build": {
 		"builder": "NIXPACKS",
-		"watchPatterns": ["apps/web/**", "packages/**"],
-		"nixpacksPlan": {
-			"providers": ["node"],
-			"phases": {
-				"setup": {
-					"nixPkgs": ["ffmpeg", "nodejs_20", "pnpm"]
-				},
-				"install": {
-					"cmds": ["pnpm install --frozen-lockfile"]
-				},
-				"build": {
-					"cmds": [
-						"export NEXT_PUBLIC_DOCKER_BUILD=true",
-						"pnpm --filter @cap/database build",
-						"pnpm --filter @cap/env build",
-						"pnpm --filter @cap/utils build",
-						"pnpm --filter @cap/web build",
-						"cp -r apps/web/public apps/web/.next/standalone/apps/web/public",
-						"cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static"
-					]
-				}
-			}
-		}
+		"nixpacksConfigPath": "nixpacks.toml"
 	},
 	"deploy": {
 		"startCommand": "node apps/web/.next/standalone/apps/web/server.js",
